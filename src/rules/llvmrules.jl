@@ -1027,224 +1027,226 @@ function register_handler!(variants, augfwd_handler, rev_handler, fwd_handler=no
     end
 end
 
-macro augfunc(f)
-   :(@cfunction((B, OrigCI, gutils, normalR, shadowR, tapeR) -> begin
-     UInt8($f(LLVM.IRBuilder(B), LLVM.CallInst(OrigCI), GradientUtils(gutils), normalR, shadowR, tapeR)::Bool)
+function augfunc(f)
+   @cfunction((B, OrigCI, gutils, normalR, shadowR, tapeR) -> begin
+     UInt8(f(LLVM.IRBuilder(B), LLVM.CallInst(OrigCI), GradientUtils(gutils), normalR, shadowR, tapeR)::Bool)
     end, UInt8, (LLVM.API.LLVMBuilderRef, LLVM.API.LLVMValueRef, API.EnzymeGradientUtilsRef, Ptr{LLVM.API.LLVMValueRef}, Ptr{LLVM.API.LLVMValueRef}, Ptr{LLVM.API.LLVMValueRef})
-    ))
+    )
 end
 
-macro revfunc(f)
-   :(@cfunction((B, OrigCI, gutils, tape) -> begin
-     $f(LLVM.IRBuilder(B), LLVM.CallInst(OrigCI), GradientUtils(gutils), tape == C_NULL ? nothing : LLVM.Value(tape))
+function revfunc(f)
+   @cfunction((B, OrigCI, gutils, tape) -> begin
+     f(LLVM.IRBuilder(B), LLVM.CallInst(OrigCI), GradientUtils(gutils), tape == C_NULL ? nothing : LLVM.Value(tape))
     end,  Cvoid, (LLVM.API.LLVMBuilderRef, LLVM.API.LLVMValueRef, API.EnzymeGradientUtilsRef, LLVM.API.LLVMValueRef)
-    ))
+    )
 end
 
-macro fwdfunc(f)
-   :(@cfunction((B, OrigCI, gutils, normalR, shadowR) -> begin
-     UInt8($f(LLVM.IRBuilder(B), LLVM.CallInst(OrigCI), GradientUtils(gutils), normalR, shadowR)::Bool)
+function fwdfunc(f)
+   @cfunction((B, OrigCI, gutils, normalR, shadowR) -> begin
+     UInt8(f(LLVM.IRBuilder(B), LLVM.CallInst(OrigCI), GradientUtils(gutils), normalR, shadowR)::Bool)
     end, UInt8, (LLVM.API.LLVMBuilderRef, LLVM.API.LLVMValueRef, API.EnzymeGradientUtilsRef, Ptr{LLVM.API.LLVMValueRef}, Ptr{LLVM.API.LLVMValueRef})
-    ))
+    )
 end
 
-@inline function register_llvm_rules()
+function register_llvm_rules()
     register_handler!(
         ("julia.call",),
-        @augfunc(jlcall_augfwd),
-        @revfunc(jlcall_rev),
-        @fwdfunc(jlcall_fwd),
+        augfunc(jlcall_augfwd),
+        revfunc(jlcall_rev),
+        fwdfunc(jlcall_fwd),
     )
     register_handler!(
         ("julia.call2",),
-        @augfunc(jlcall2_augfwd),
-        @revfunc(jlcall2_rev),
-        @fwdfunc(jlcall2_fwd),
+        augfunc(jlcall2_augfwd),
+        revfunc(jlcall2_rev),
+        fwdfunc(jlcall2_fwd),
     )
     register_handler!(
         ("jl_apply_generic", "ijl_apply_generic"),
-        @augfunc(generic_augfwd),
-        @revfunc(generic_rev),
-        @fwdfunc(generic_fwd),
+        augfunc(generic_augfwd),
+        revfunc(generic_rev),
+        fwdfunc(generic_fwd),
     )
+
     register_handler!(
         ("jl_invoke", "ijl_invoke", "jl_f_invoke"),
-        @augfunc(invoke_augfwd),
-        @revfunc(invoke_rev),
-        @fwdfunc(invoke_fwd),
+        augfunc(invoke_augfwd),
+        revfunc(invoke_rev),
+        fwdfunc(invoke_fwd),
     )
     register_handler!(
         ("jl_f__apply_latest", "jl_f__call_latest"),
-        @augfunc(apply_latest_augfwd),
-        @revfunc(apply_latest_rev),
-        @fwdfunc(apply_latest_fwd),
+        augfunc(apply_latest_augfwd),
+        revfunc(apply_latest_rev),
+        fwdfunc(apply_latest_fwd),
     )
+
     register_handler!(
         ("jl_threadsfor",),
-        @augfunc(threadsfor_augfwd),
-        @revfunc(threadsfor_rev),
-        @fwdfunc(threadsfor_fwd),
+        augfunc(threadsfor_augfwd),
+        revfunc(threadsfor_rev),
+        fwdfunc(threadsfor_fwd),
     )
     register_handler!(
         ("jl_pmap",),
-        @augfunc(pmap_augfwd),
-        @revfunc(pmap_rev),
-        @fwdfunc(pmap_fwd),
+        augfunc(pmap_augfwd),
+        revfunc(pmap_rev),
+        fwdfunc(pmap_fwd),
     )
     register_handler!(
         ("jl_new_task", "ijl_new_task"),
-        @augfunc(newtask_augfwd),
-        @revfunc(newtask_rev),
-        @fwdfunc(newtask_fwd),
+        augfunc(newtask_augfwd),
+        revfunc(newtask_rev),
+        fwdfunc(newtask_fwd),
     )
     register_handler!(
         ("jl_set_task_threadpoolid", "ijl_set_task_threadpoolid"),
-        @augfunc(set_task_tid_augfwd),
-        @revfunc(set_task_tid_rev),
-        @fwdfunc(set_task_tid_fwd),
+        augfunc(set_task_tid_augfwd),
+        revfunc(set_task_tid_rev),
+        fwdfunc(set_task_tid_fwd),
     )
     register_handler!(
         ("jl_enq_work",),
-        @augfunc(enq_work_augfwd),
-        @revfunc(enq_work_rev),
-        @fwdfunc(enq_work_fwd)
+        augfunc(enq_work_augfwd),
+        revfunc(enq_work_rev),
+        fwdfunc(enq_work_fwd)
     )
     register_handler!(
         ("enzyme_custom",),
-        @augfunc(enzyme_custom_augfwd),
-        @revfunc(enzyme_custom_rev),
-        @fwdfunc(enzyme_custom_fwd)
+        augfunc(enzyme_custom_augfwd),
+        revfunc(enzyme_custom_rev),
+        fwdfunc(enzyme_custom_fwd)
     )
     register_handler!(
         ("jl_wait",),
-        @augfunc(wait_augfwd),
-        @revfunc(wait_rev),
-        @fwdfunc(wait_fwd),
+        augfunc(wait_augfwd),
+        revfunc(wait_rev),
+        fwdfunc(wait_fwd),
     )
     register_handler!(
         ("jl_","jl_breakpoint"),
-        @augfunc(noop_augfwd),
-        @revfunc(duplicate_rev),
-        @fwdfunc(noop_fwd),
+        augfunc(noop_augfwd),
+        revfunc(duplicate_rev),
+        fwdfunc(noop_fwd),
     )
     register_handler!(
         ("jl_array_copy","ijl_array_copy"),
-        @augfunc(arraycopy_augfwd),
-        @revfunc(arraycopy_rev),
-        @fwdfunc(arraycopy_fwd),
+        augfunc(arraycopy_augfwd),
+        revfunc(arraycopy_rev),
+        fwdfunc(arraycopy_fwd),
     )
     register_handler!(
         ("jl_reshape_array","ijl_reshape_array"),
-        @augfunc(arrayreshape_augfwd),
-        @revfunc(arrayreshape_rev),
-        @fwdfunc(arrayreshape_fwd),
+        augfunc(arrayreshape_augfwd),
+        revfunc(arrayreshape_rev),
+        fwdfunc(arrayreshape_fwd),
     )
     register_handler!(
         ("jl_f_setfield","ijl_f_setfield"),
-        @augfunc(setfield_augfwd),
-        @revfunc(setfield_rev),
-        @fwdfunc(setfield_fwd),
+        augfunc(setfield_augfwd),
+        revfunc(setfield_rev),
+        fwdfunc(setfield_fwd),
     )
     register_handler!(
         ("jl_box_float32","ijl_box_float32", "jl_box_float64", "ijl_box_float64"),
-        @augfunc(boxfloat_augfwd),
-        @revfunc(boxfloat_rev),
-        @fwdfunc(boxfloat_fwd),
+        augfunc(boxfloat_augfwd),
+        revfunc(boxfloat_rev),
+        fwdfunc(boxfloat_fwd),
     )
     register_handler!(
         ("jl_f_tuple","ijl_f_tuple"),
-        @augfunc(f_tuple_augfwd),
-        @revfunc(f_tuple_rev),
-        @fwdfunc(f_tuple_fwd),
+        augfunc(f_tuple_augfwd),
+        revfunc(f_tuple_rev),
+        fwdfunc(f_tuple_fwd),
     )
     register_handler!(
         ("jl_eqtable_get","ijl_eqtable_get"),
-        @augfunc(eqtableget_augfwd),
-        @revfunc(eqtableget_rev),
-        @fwdfunc(eqtableget_fwd),
+        augfunc(eqtableget_augfwd),
+        revfunc(eqtableget_rev),
+        fwdfunc(eqtableget_fwd),
     )
     register_handler!(
         ("jl_eqtable_put","ijl_eqtable_put"),
-        @augfunc(eqtableput_augfwd),
-        @revfunc(eqtableput_rev),
-        @fwdfunc(eqtableput_fwd),
+        augfunc(eqtableput_augfwd),
+        revfunc(eqtableput_rev),
+        fwdfunc(eqtableput_fwd),
     )
     register_handler!(
         ("jl_idtable_rehash","ijl_idtable_rehash"),
-        @augfunc(idtablerehash_augfwd),
-        @revfunc(idtablerehash_rev),
-        @fwdfunc(idtablerehash_fwd),
+        augfunc(idtablerehash_augfwd),
+        revfunc(idtablerehash_rev),
+        fwdfunc(idtablerehash_fwd),
     )
     register_handler!(
         ("jl_f__apply_iterate","ijl_f__apply_iterate"),
-        @augfunc(apply_iterate_augfwd),
-        @revfunc(apply_iterate_rev),
-        @fwdfunc(apply_iterate_fwd),
+        augfunc(apply_iterate_augfwd),
+        revfunc(apply_iterate_rev),
+        fwdfunc(apply_iterate_fwd),
     )
     register_handler!(
         ("jl_f__svec_ref","ijl_f__svec_ref"),
-        @augfunc(f_svec_ref_augfwd),
-        @revfunc(f_svec_ref_rev),
-        @fwdfunc(f_svec_ref_fwd),
+        augfunc(f_svec_ref_augfwd),
+        revfunc(f_svec_ref_rev),
+        fwdfunc(f_svec_ref_fwd),
     )
     register_handler!(
         ("jl_new_structv","ijl_new_structv"),
-        @augfunc(new_structv_augfwd),
-        @revfunc(new_structv_rev),
-        @fwdfunc(new_structv_fwd),
+        augfunc(new_structv_augfwd),
+        revfunc(new_structv_rev),
+        fwdfunc(new_structv_fwd),
     )
     register_handler!(
         ("jl_get_binding_or_error", "ijl_get_binding_or_error"),
-        @augfunc(get_binding_or_error_augfwd),
-        @revfunc(get_binding_or_error_rev),
-        @fwdfunc(get_binding_or_error_fwd),
+        augfunc(get_binding_or_error_augfwd),
+        revfunc(get_binding_or_error_rev),
+        fwdfunc(get_binding_or_error_fwd),
     )
     register_handler!(
         ("jl_gc_add_finalizer_th","ijl_gc_add_finalizer_th", "jl_gc_add_ptr_finalizer","ijl_gc_add_ptr_finalizer"),
-        @augfunc(finalizer_augfwd),
-        @revfunc(finalizer_rev),
-        @fwdfunc(finalizer_fwd),
+        augfunc(finalizer_augfwd),
+        revfunc(finalizer_rev),
+        fwdfunc(finalizer_fwd),
     )
     register_handler!(
         ("jl_array_grow_end","ijl_array_grow_end"),
-        @augfunc(jl_array_grow_end_augfwd),
-        @revfunc(jl_array_grow_end_rev),
-        @fwdfunc(jl_array_grow_end_fwd),
+        augfunc(jl_array_grow_end_augfwd),
+        revfunc(jl_array_grow_end_rev),
+        fwdfunc(jl_array_grow_end_fwd),
     )
     register_handler!(
         ("jl_array_del_end","ijl_array_del_end"),
-        @augfunc(jl_array_del_end_augfwd),
-        @revfunc(jl_array_del_end_rev),
-        @fwdfunc(jl_array_del_end_fwd),
+        augfunc(jl_array_del_end_augfwd),
+        revfunc(jl_array_del_end_rev),
+        fwdfunc(jl_array_del_end_fwd),
     )
     register_handler!(
         ("jl_f_getfield","ijl_f_getfield"),
-        @augfunc(jl_getfield_augfwd),
-        @revfunc(jl_getfield_rev),
-        @fwdfunc(jl_getfield_fwd),
+        augfunc(jl_getfield_augfwd),
+        revfunc(jl_getfield_rev),
+        fwdfunc(jl_getfield_fwd),
     )
     register_handler!(
         ("ijl_get_nth_field_checked","jl_get_nth_field_checked"),
-        @augfunc(jl_nthfield_augfwd),
-        @revfunc(jl_nthfield_rev),
-        @fwdfunc(jl_nthfield_fwd),
+        augfunc(jl_nthfield_augfwd),
+        revfunc(jl_nthfield_rev),
+        fwdfunc(jl_nthfield_fwd),
     )
     register_handler!(
         ("jl_array_sizehint","ijl_array_sizehint"),
-        @augfunc(jl_array_sizehint_augfwd),
-        @revfunc(jl_array_sizehint_rev),
-        @fwdfunc(jl_array_sizehint_fwd),
+        augfunc(jl_array_sizehint_augfwd),
+        revfunc(jl_array_sizehint_rev),
+        fwdfunc(jl_array_sizehint_fwd),
     )
     register_handler!(
         ("jl_array_ptr_copy","ijl_array_ptr_copy"),
-        @augfunc(jl_array_ptr_copy_augfwd),
-        @revfunc(jl_array_ptr_copy_rev),
-        @fwdfunc(jl_array_ptr_copy_fwd),
+        augfunc(jl_array_ptr_copy_augfwd),
+        revfunc(jl_array_ptr_copy_rev),
+        fwdfunc(jl_array_ptr_copy_fwd),
     )
     register_handler!(
         (),
-        @augfunc(jl_unhandled_augfwd),
-        @revfunc(jl_unhandled_rev),
-        @fwdfunc(jl_unhandled_fwd),
+        augfunc(jl_unhandled_augfwd),
+        revfunc(jl_unhandled_rev),
+        fwdfunc(jl_unhandled_fwd),
     )
 end

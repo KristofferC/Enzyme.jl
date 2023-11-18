@@ -15,6 +15,7 @@ ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 
 [compat]
 CEnum = "0.4, 0.5"
